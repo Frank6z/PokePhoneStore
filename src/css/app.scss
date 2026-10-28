@@ -1,1 +1,39 @@
 // app global css
+
+// Evita scroll horizontal accidental en pantallas pequeñas
+body {
+  overflow-x: hidden;
+}
+
+// Botones "push": transición suave y hundimiento más marcado al pulsar
+.q-btn--push {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+
+  &:active {
+    transform: translateY(2px);
+  }
+}
+
+// Ajustes para teléfonos (breakpoint xs de Quasar: < 600px)
+@media (max-width: $breakpoint-xs-max) {
+  .q-page.q-pa-md {
+    padding: 12px !important;
+  }
+
+  .text-h4 {
+    font-size: 1.6rem;
+    line-height: 2rem;
+  }
+
+  .text-h5 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  .text-h6 {
+    font-size: 1.1rem;
+    line-height: 1.6rem;
+  }
+}
