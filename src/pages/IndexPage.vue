@@ -85,7 +85,7 @@
     </div>
 
     <div v-else class="row" :class="$q.screen.lt.sm ? 'q-col-gutter-sm' : 'q-col-gutter-md'">
-      <div v-for="phone in filteredAndSortedPhones" :key="phone.id" class="col-6 col-md-4 col-lg-3">
+      <div v-for="phone in paginatedPhones" :key="phone.id" class="col-6 col-md-4 col-lg-3">
         <q-card
           class="column no-wrap full-height shadow-2 cursor-pointer product-card"
           @click="verDetalles(phone.id)"
@@ -145,8 +145,53 @@
       </div>
     </div>
 
+    <!-- PAGINACIÓN -->
+    <q-card
+      v-if="!cargandoCatalogo && totalPhones > 0"
+      flat
+      bordered
+      class="bg-white q-pa-sm q-mt-lg shadow-1"
+    >
+      <div class="row items-center justify-between q-col-gutter-sm">
+        <div class="col-12 col-sm-auto row items-center no-wrap justify-center q-gutter-x-sm">
+          <span class="text-caption text-grey-7">Mostrar</span>
+          <q-select
+            v-model="perPage"
+            :options="perPageOptions"
+            outlined
+            dense
+            options-dense
+            color="primary"
+            class="per-page-select"
+            aria-label="Teléfonos por página"
+          />
+          <span class="text-caption text-grey-7">por página</span>
+        </div>
+
+        <div class="col-12 col-sm-auto flex flex-center">
+          <q-pagination
+            v-if="totalPages > 1"
+            v-model="currentPage"
+            :max="totalPages"
+            :max-pages="$q.screen.lt.sm ? 3 : 6"
+            boundary-links
+            direction-links
+            boundary-numbers
+            color="primary"
+            active-design="push"
+            active-color="primary"
+            :size="$q.screen.lt.sm ? 'sm' : 'md'"
+          />
+        </div>
+
+        <div class="col-12 col-sm-auto text-center text-caption text-grey-7">
+          Mostrando {{ rangeStart }}–{{ rangeEnd }} de {{ totalPhones }}
+        </div>
+      </div>
+    </q-card>
+
     <div
-      v-if="!cargandoCatalogo && filteredAndSortedPhones.length === 0"
+      v-if="!cargandoCatalogo && totalPhones === 0"
       class="column flex-center text-center q-pa-xl text-grey-6"
     >
       <img src="../assets/venusaur.gif" alt="" class="state-gif q-mb-md" />
@@ -173,7 +218,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useFilterStore } from '@/stores/filterStore'
@@ -321,6 +366,41 @@ const filteredAndSortedPhones = computed(() => {
   return result
 })
 
+// Paginación (sobre la lista ya filtrada y ordenada)
+const perPageOptions = [4, 8, 10, 20, 30, 40, 50]
+const perPage = ref(8)
+const currentPage = ref(1)
+
+const totalPhones = computed(() => filteredAndSortedPhones.value.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalPhones.value / perPage.value)))
+
+const paginatedPhones = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value
+  return filteredAndSortedPhones.value.slice(start, start + perPage.value)
+})
+
+const rangeStart = computed(() => (currentPage.value - 1) * perPage.value + 1)
+const rangeEnd = computed(() => Math.min(currentPage.value * perPage.value, totalPhones.value))
+
+// Al cambiar filtros, orden o cantidad por página se vuelve a la primera página
+watch(
+  [() => filterStore.filters, minPrecio, maxPrecio, sortBy, perPage],
+  () => {
+    currentPage.value = 1
+  },
+  { deep: true },
+)
+
+// Si se borra un teléfono y la página actual queda vacía, retrocede a la última válida
+watch(totalPages, (pages) => {
+  if (currentPage.value > pages) currentPage.value = pages
+})
+
+// Al pasar de página, subir al inicio del catálogo
+watch(currentPage, () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+})
+
 // Cantidad de filtros activos del drawer (para el badge del botón)
 const activeFiltersCount = computed(
   () =>
@@ -416,6 +496,10 @@ const verDetalles = (id) => {
   .card-overlay {
     padding: 6px;
   }
+}
+
+.per-page-select {
+  min-width: 76px;
 }
 
 .state-gif {

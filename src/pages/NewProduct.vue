@@ -141,7 +141,15 @@
                 <q-select
                   bg-color="green-4"
                   v-model="newProduct.brand"
-                  :options="['Samsung', 'Huawei', 'Nokia', 'iPhone', 'Xiaomi']"
+                  :options="[
+                    'Samsung',
+                    'Huawei',
+                    'Motorola',
+                    'Nokia',
+                    'iPhone',
+                    'Xiaomi',
+                    'Google',
+                  ]"
                   outlined
                   dense
                   required
@@ -194,7 +202,10 @@
                 >
                 <q-input
                   bg-color="green-4"
-                  v-model="newProduct.rom"
+                  v-model.number="newProduct.rom"
+                  type="number"
+                  min="1"
+                  :suffix="newProduct.rom ? 'GB' : undefined"
                   outlined
                   dense
                   clearable
@@ -207,7 +218,10 @@
                 <label class="block text-weight-bold text-green-10 q-mb-xs">RAM</label>
                 <q-input
                   bg-color="green-4"
-                  v-model="newProduct.ram"
+                  v-model.number="newProduct.ram"
+                  type="number"
+                  min="1"
+                  :suffix="newProduct.ram ? 'GB' : undefined"
                   outlined
                   dense
                   clearable
@@ -358,8 +372,9 @@ const saveProduct = async () => {
       name: newProduct.value.name,
       screen: Number(newProduct.value.screen),
       system: newProduct.value.system,
-      rom: newProduct.value.rom,
-      ram: newProduct.value.ram,
+      // se guardan con la unidad ("256 GB") igual que en phones.json
+      rom: `${newProduct.value.rom} GB`,
+      ram: `${newProduct.value.ram} GB`,
       seller: newProduct.value.seller,
       phoneContact: newProduct.value.phoneContact,
       description: newProduct.value.description,

@@ -3,7 +3,7 @@ import { api } from '@/boot/axios'
 // Base de datos de CouchDB dedicada EXCLUSIVAMENTE a imágenes.
 // Cada documento solo contiene los campos nativos de CouchDB:
 // _id (= id del documento en Firestore), _rev y _attachments.
-const COUCH_DB = 'imagenesfpi'
+const COUCH_DB = 'fpi-imagenes'
 
 const docPath = (docId) => `/${COUCH_DB}/${encodeURIComponent(docId)}`
 
