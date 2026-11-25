@@ -1,12 +1,15 @@
 import { defineBoot } from '#q-app'
 import axios from 'axios'
 
+const couchUser = import.meta.env.QCLI_COUCH_USER
+const couchPass = import.meta.env.QCLI_COUCH_PASS
+
 const api = axios.create({
   baseURL: import.meta.env.QCLI_COUCH_URL,
-  auth: {
-    username: import.meta.env.QCLI_COUCH_USER,
-    password: import.meta.env.QCLI_COUCH_PASS,
-  },
+  // Solo se envían credenciales si están definidas. Sin ellas las peticiones van
+  // anónimas (fpi-imagenes permite lectura/escritura pública) y no se expone
+  // ninguna contraseña en el JavaScript publicado (p. ej. en Netlify).
+  ...(couchUser && couchPass ? { auth: { username: couchUser, password: couchPass } } : {}),
 })
 
 export default defineBoot(({ app }) => {
