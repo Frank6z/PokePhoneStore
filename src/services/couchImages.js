@@ -3,13 +3,19 @@ import { api } from '@/boot/axios'
 // Base de datos de CouchDB dedicada EXCLUSIVAMENTE a imágenes.
 // Cada documento solo contiene los campos nativos de CouchDB:
 // _id (= id del documento en Firestore), _rev y _attachments.
-const COUCH_DB = 'fpi-imagenes'
+export const COUCH_DB = 'fpi-imagenes'
 
 const docPath = (docId) => `/${COUCH_DB}/${encodeURIComponent(docId)}`
 
-// URL pública de un adjunto (la que se guarda como referencia en Firestore)
-export const attachmentUrl = (docId, attname) =>
-  `${api.defaults.baseURL}${docPath(docId)}/${encodeURIComponent(attname)}`
+// Ruta RELATIVA de un adjunto (lo que se guarda en Firestore), sin dominio:
+// "fpi-imagenes/<id>/archivo0.jpg". Así, si cambia la URL de CouchDB
+// (p. ej. el túnel de Cloudflare), no hay que tocar los datos guardados.
+export const attachmentPath = (docId, attname) =>
+  `${COUCH_DB}/${encodeURIComponent(docId)}/${encodeURIComponent(attname)}`
+
+// Convierte una ruta relativa en la URL completa usando la URL actual del .env
+export const couchFileUrl = (path) =>
+  `${String(api.defaults.baseURL || '').replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`
 
 // Crea el documento vacío (solo _id/_rev) o, si ya existe, lo normaliza
 // eliminando cualquier campo que no sea estructural. Devuelve el _rev actual.
@@ -29,10 +35,10 @@ async function ensureImageDoc(docId) {
   }
 }
 
-// Sube las imágenes como attachments del documento y devuelve sus URLs
+// Sube las imágenes como attachments del documento y devuelve sus rutas relativas
 export async function uploadImages(docId, files) {
   let rev = await ensureImageDoc(docId)
-  const urls = []
+  const paths = []
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
@@ -45,10 +51,10 @@ export async function uploadImages(docId, files) {
 
     // cada adjunto genera una nueva revisión que se usa para el siguiente
     rev = data.rev
-    urls.push(attachmentUrl(docId, attname))
+    paths.push(attachmentPath(docId, attname))
   }
 
-  return urls
+  return paths
 }
 
 // Elimina el documento de imágenes (con todos sus attachments)

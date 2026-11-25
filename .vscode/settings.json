@@ -9,5 +9,6 @@
     "dist/": true,
     ".quasar/": true,
     "/quasar.config.js.temporary.*": true
-  }
+  },
+  "python.terminal.useEnvFile": true
 }
