@@ -43,7 +43,14 @@
                 class="absolute-full"
                 spinner-color="primary"
                 :alt="`${phone.title} - imagen ${index + 1}`"
-              />
+              >
+                <!-- Si la imagen no carga se muestra la imagen por defecto -->
+                <template #error>
+                  <div class="absolute-full flex flex-center bg-grey-1">
+                    <img :src="defaultPhoneImage" alt="" class="no-image-icon" />
+                  </div>
+                </template>
+              </q-img>
             </q-carousel-slide>
           </q-carousel>
 
@@ -52,8 +59,8 @@
             class="column flex-center bg-grey-1 rounded-borders text-grey-6"
             :style="{ height: galleryHeight }"
           >
-            <img :src="placeholderIcon" alt="" class="no-image-icon q-mb-sm" />
-            Sin imágenes
+            <img :src="defaultPhoneImage" alt="" class="no-image-icon q-mb-sm" />
+            Imagen no disponible
           </div>
         </q-card>
       </div>
@@ -140,7 +147,7 @@ import { useQuasar } from 'quasar'
 import { useCartStore } from '@/stores/cartStore'
 import { db } from '@/boot/firebase'
 import { collection, getDocs } from 'firebase/firestore'
-import { phoneImages, placeholderIcon } from '@/utils/phoneImage'
+import { phoneImages, defaultPhoneImage } from '@/utils/phoneImage'
 
 const route = useRoute()
 const $q = useQuasar()
@@ -202,9 +209,9 @@ function agregarAlCarrito() {
   object-fit: cover;
 }
 .no-image-icon {
-  width: 80px;
-  opacity: 0.45;
-  filter: grayscale(40%);
+  height: 60%;
+  max-width: 80%;
+  object-fit: contain;
 }
 
 @media (max-width: 599px) {

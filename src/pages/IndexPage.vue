@@ -95,15 +95,16 @@
             <q-img
               :src="resolvePhoneImage(phone.images?.[0])"
               :ratio="4 / 3"
-              :fit="phone.images?.length ? 'cover' : 'contain'"
+              :fit="isDefaultImage(resolvePhoneImage(phone.images?.[0])) ? 'contain' : 'cover'"
               spinner-color="primary"
               class="product-image"
-              :class="{ 'is-placeholder': !phone.images?.length }"
+              :class="{ 'is-placeholder': isDefaultImage(resolvePhoneImage(phone.images?.[0])) }"
               :alt="phone.title"
             >
+              <!-- Si la imagen no carga se muestra la imagen por defecto -->
               <template #error>
                 <div class="absolute-full flex flex-center bg-grey-1 image-fallback">
-                  <img :src="placeholderIcon" alt="" class="no-image-icon" />
+                  <img :src="defaultPhoneImage" alt="" class="no-image-icon" />
                 </div>
               </template>
             </q-img>
@@ -225,7 +226,7 @@ import { useFilterStore } from '@/stores/filterStore'
 import { db } from '@/boot/firebase'
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore'
 import { deleteImageDoc } from '@/services/couchImages'
-import { resolvePhoneImage, placeholderIcon } from '@/utils/phoneImage'
+import { resolvePhoneImage, defaultPhoneImage, isDefaultImage } from '@/utils/phoneImage'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -447,9 +448,7 @@ const verDetalles = (id) => {
   transition: transform 0.3s ease;
 }
 .product-image.is-placeholder :deep(.q-img__image) {
-  padding: 18%;
-  opacity: 0.45;
-  filter: grayscale(40%);
+  padding: 12%;
 }
 .card-overlay {
   pointer-events: none;
@@ -506,9 +505,9 @@ const verDetalles = (id) => {
   height: 96px;
 }
 .no-image-icon {
-  width: 72px;
-  opacity: 0.45;
-  filter: grayscale(40%);
+  height: 76%;
+  max-width: 76%;
+  object-fit: contain;
 }
 
 .custom-font {

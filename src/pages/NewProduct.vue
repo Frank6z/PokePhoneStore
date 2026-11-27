@@ -320,6 +320,7 @@ import { useQuasar } from 'quasar'
 import { db } from '@/boot/firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore'
 import { uploadImages, deleteImageDoc } from '@/services/couchImages'
+import { checkCouchAvailability } from '@/utils/phoneImage'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -385,27 +386,49 @@ const saveProduct = async () => {
     const firebaseId = docRef.id
 
     // 2. Subir las imagenes a CouchDB (documento con solo _id, _rev y _attachments)
+    let savedWithoutImages = false
     if (filesImages.value && filesImages.value.length > 0) {
-      try {
-        const imageUrls = await uploadImages(firebaseId, filesImages.value)
+      if (!(await checkCouchAvailability({ force: true }))) {
+        // CouchDB no responde desde este equipo: el anuncio se guarda igual
+        // y se mostrará con la imagen por defecto
+        savedWithoutImages = true
+      } else {
+        try {
+          const imagePaths = await uploadImages(firebaseId, filesImages.value)
 
-        // 3. Guardar en Firestore solo la referencia a los adjuntos de CouchDB
-        await updateDoc(doc(db, 'phones', firebaseId), { images: imageUrls })
-      } catch (imageError) {
-        // Revertir para no dejar un producto sin imagenes ni adjuntos huerfanos
-        await Promise.allSettled([
-          deleteDoc(doc(db, 'phones', firebaseId)),
-          deleteImageDoc(firebaseId),
-        ])
-        throw imageError
+          // 3. Guardar en Firestore solo la referencia a los adjuntos de CouchDB
+          await updateDoc(doc(db, 'phones', firebaseId), { images: imagePaths })
+        } catch (imageError) {
+          if (!imageError.response) {
+            // Se perdió la conexión con CouchDB: se conserva el anuncio sin imágenes
+            await deleteImageDoc(firebaseId).catch(() => {})
+            savedWithoutImages = true
+          } else {
+            // CouchDB respondió con un error: revertir para no dejar datos a medias
+            await Promise.allSettled([
+              deleteDoc(doc(db, 'phones', firebaseId)),
+              deleteImageDoc(firebaseId),
+            ])
+            throw imageError
+          }
+        }
       }
     }
 
-    $q.notify({
-      type: 'positive',
-      message: '¡Anuncio e imágenes guardados con éxito!',
-      position: 'top',
-    })
+    $q.notify(
+      savedWithoutImages
+        ? {
+            type: 'warning',
+            message:
+              'Anuncio guardado. El servidor de imágenes no está disponible, se mostrará con la imagen por defecto',
+            position: 'top',
+          }
+        : {
+            type: 'positive',
+            message: '¡Anuncio guardado con éxito!',
+            position: 'top',
+          },
+    )
 
     router.push('/')
   } catch (error) {

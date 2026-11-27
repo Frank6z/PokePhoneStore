@@ -21,11 +21,16 @@
                 <q-img
                   :src="resolvePhoneImage(item.images?.[0])"
                   :ratio="1"
-                  :fit="item.images?.length ? 'cover' : 'contain'"
+                  :fit="isDefaultImage(resolvePhoneImage(item.images?.[0])) ? 'contain' : 'cover'"
                   no-spinner
                   class="fit"
                   :alt="item.title"
-                />
+                >
+                  <!-- Si la imagen no carga se muestra la imagen por defecto -->
+                  <template #error>
+                    <img :src="defaultPhoneImage" alt="" class="absolute-full fit cart-fallback" />
+                  </template>
+                </q-img>
               </q-avatar>
             </q-item-section>
 
@@ -97,7 +102,7 @@
 import { useCartStore } from '@/stores/cartStore'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
-import { resolvePhoneImage } from '@/utils/phoneImage'
+import { resolvePhoneImage, defaultPhoneImage, isDefaultImage } from '@/utils/phoneImage'
 
 const cartStore = useCartStore()
 const $q = useQuasar()
@@ -129,6 +134,11 @@ function finalizarCompra() {
 <style scoped>
 .empty-gif {
   height: 96px;
+}
+.cart-fallback {
+  object-fit: contain;
+  padding: 6px;
+  background: #f5f5f5;
 }
 .cart-thumb {
   background: #f5f5f5;

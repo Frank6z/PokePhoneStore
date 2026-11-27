@@ -63,7 +63,10 @@ export async function deleteImageDoc(docId) {
     const { data } = await api.get(docPath(docId))
     await api.delete(docPath(docId), { params: { rev: data._rev } })
   } catch (error) {
-    // si no existe en CouchDB no hay nada que limpiar
-    if (error.response?.status !== 404) throw error
+    // Si no existe (404) no hay nada que limpiar. Si CouchDB no responde
+    // (sin error.response: servidor apagado o no accesible desde este equipo)
+    // tampoco se puede hacer nada, así que no se trata como error.
+    if (!error.response || error.response.status === 404) return
+    throw error
   }
 }
